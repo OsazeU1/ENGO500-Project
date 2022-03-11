@@ -99,8 +99,10 @@ class BESTPOS:
         gpsglo_sigmask = mainbody[20]
 
         extsolstat_message = d.bestpos_ess[extsolstat]
-        galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
-        gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
+        galbei_message = "WIP"
+        gpsglo_message = "WIP"
+        #galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
+        #gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
 
         # Assigning Local Variables
         self.solstat_message = solstat_message
@@ -125,6 +127,15 @@ class BESTPOS:
         self.galbei_message = galbei_message
         self.gpsglo_sigmask = gpsglo_sigmask
         self.crc = crc
+        return
+
+
+class NoBody:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        self.type = None
         return
 
 # Unfinished
@@ -168,7 +179,7 @@ class LBANDBEAMTABLE:
             self.entries = entries
 
 
-# Windows Application
+# Windows Application (.exe)
 class Application(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
@@ -187,11 +198,34 @@ class Application(tk.Frame):
             master, text="Parse Data", command=self.ParseFile)
         self.parsebutton.pack()
 
+        self.ebutton = tk.Button(
+            master, text="Display Galileo and BeiDou Signals", command=None)
+        self.ebutton.pack()
+
+        self.fbutton = tk.Button(
+            master, text="Display GPS and GLONASS Signals", command=None)
+        self.fbutton.pack()
+
         self.GNSSLines = []
         self.getpositionsbutton = tk.Button(
             text="Get Positioning Information", command=self.GetPositioningData)
         self.getpositionsbutton.pack()
-        return
+
+        self.abutton = tk.Button(
+            text="Get Velocity Information", command=None)
+        self.abutton.pack()
+
+        self.bbutton = tk.Button(
+            text="Get Satellite Information", command=None)
+        self.bbutton.pack()
+
+        self.cbutton = tk.Button(
+            text="Get Frequency Information", command=None)
+        self.cbutton.pack()
+
+        self.dbutton = tk.Button(
+            text="Get Device Position Information", command=None)
+        self.dbutton.pack()
 
     def openFile(self):
         self.filename = filedialog.askopenfilename(initialdir="C:\\",
@@ -220,6 +254,7 @@ class Application(tk.Frame):
                 numberoflines += 1
 
                 [header, body] = func.GetHeaderBody(line)
+                print(body)
                 parsedheader = func.ParseHeader(header)
                 newHeader = Header()
                 newHeader.Parse(parsedheader)
@@ -228,8 +263,8 @@ class Application(tk.Frame):
 
                 if log_name == "BESTPOS":
                     newBody = BESTPOS()
-                elif log_name == "RANGE":
-                    a = 0
+                else:
+                    newBody = NoBody()
 
                 newBody.Parse(body)
 
@@ -241,7 +276,9 @@ class Application(tk.Frame):
         return
 
     def GetPositioningData(self):
-        Data = []
+        header = ["week", "seconds", "stnid", "numberofsatsinsol", "numberofL1",
+                  "numberofmultisats", "lat", "latsigma", "lon", "lonsigma", "hgt", 'hgtsigma', 'und']
+        Data = [[header]]
 
         if self.filename == None:
             returnma
@@ -267,6 +304,7 @@ class Application(tk.Frame):
                 Data.append(textline)
             else:
                 continue
+
         self.WriteData("PositioningDatafor ", Data)
         print("Positioning Data csv for " + self.filename + " created!")
         return

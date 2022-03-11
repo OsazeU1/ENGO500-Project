@@ -68,7 +68,7 @@ def SplitBodyMessage(line):
     mainbody = split[0]
     return[mainbody, crc]
 
-
+# Unfinished: Hex to Binary Conversion
 def BytesToBinary(bytes_str):
     binary_str = BitArray(hex=bytes_str)
     binary_str.bin[2:]
@@ -93,8 +93,8 @@ def ParseFile(filename):
         # Checks for the command and creates object accordingly
         if log_name == "BESTPOS":
             newBody = BESTPOS()
-        elif log_name == "RANGE":
-            a = 0
+        else:
+            newBody = None
 
         newBody.Parse(body)
 

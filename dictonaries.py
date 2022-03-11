@@ -46,7 +46,7 @@ recieverstatus = {
     '0x10000000': 'Digital Filtering Enabled',
     '0x20000000': 'Auxiliary 3 status event flag',
     '0x40000000': 'Auxiliary 2 status event flag',
-    'x80000000': 'Auxiliary 1 status event flag'
+    '0x80000000': 'Auxiliary 1 status event flag'
 
 
 }
@@ -197,6 +197,8 @@ bestpos_gpsglo_sigmask = {
     "01":  "GPS L1 used in Solution",
     "02": "GPS L2 used in Solution",
     "03": "Reserved (unsure)",
+    "11": "unkown",
+    "33": "unknown",
     "04": "GPS L5 used in Solution",
     "10": "GLONASS L1 used in Solution",
     "20": "GLONASS L2 used in Solution",
