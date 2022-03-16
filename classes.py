@@ -21,21 +21,34 @@ class Header:
             header = [header[1]]
             rxconfig = True
 
+
         # assigning variables
-        [sync, command, port, sequence, idletime,
-         timestatus_message, week, seconds, recieverstatus, reserved, recieversw] = header[0]
-        self.sync = sync
-        self.command = command
-        self.port = port
-        self.sequence = sequence
-        self.idletime = idletime
-        self.timestatus_message = timestatus_message
-        self.week = week
-        self.seconds = seconds
-        self. recieverstatus = recieverstatus
-        self.reserved = reserved
-        self.recieversw = recieversw
-        self.rxconfig = rxconfig
+        print(header)
+        print('\n')
+        temp = header[0]
+        if temp[0] == "#":
+            [sync, command, port, sequence, idletime,
+            timestatus_message, week, seconds, recieverstatus, reserved, recieversw] = header[0]
+            self.sync = sync
+            self.command = command
+            self.port = port
+            self.sequence = sequence
+            self.idletime = idletime
+            self.timestatus_message = timestatus_message
+            self.week = week
+            self.seconds = seconds
+            self.recieverstatus = recieverstatus
+            self.reserved = reserved
+            self.recieversw = recieversw
+            self.rxconfig = rxconfig
+        elif temp[0] == "%":
+            [sync, command] = header[0]
+            self.sync = sync
+            self.command = command
+        elif temp[0] == "$":
+            [sync, command] = header[0]
+            self.sync = sync
+            self.command = command
         return
 
 # Fully parsed gnss line
@@ -145,9 +158,82 @@ class BESTGNSSPOS:
     def __init__(self):
         return
 
+    # takes the split off body message (after ";")
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+
+        # assigning variables and translating codes to messages
+        solstat = mainbody[0]
+        solstat_message = d.bestpos_solutionsstatus[solstat]
+
+        postype = mainbody[1]
+        postype_message = d.bestpos_posveltype[postype]
+
+        lat = mainbody[2]
+        lon = mainbody[3]
+        hgt = mainbody[4]
+        undulation = mainbody[5]
+
+        datumid = mainbody[6]
+        if (datumid == 61):
+            datum = "WGS84"
+        elif (datumid == 63):
+            datum = "USER"
+        else:
+            datum = "ERROR"
+
+        latsigma = mainbody[7]
+        lonsigma = mainbody[8]
+        hgtsigma = mainbody[9]
+        stnid = mainbody[10]
+        diff_age = mainbody[11]
+        sol_age = mainbody[12]
+        numberoftrackedsats = mainbody[13]
+        numberofsatsinsol = mainbody[14]
+        numberofL1sats = mainbody[15]
+        numberofmultisats = mainbody[16]
+        reserved = mainbody[17]
+        extsolstat = mainbody[18]
+        galbei_sigmask = mainbody[19]
+        gpsglo_sigmask = mainbody[20]
+
+        extsolstat_message = d.bestpos_ess[extsolstat]
+        galbei_message = "WIP"
+        gpsglo_message = "WIP"
+        #galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
+        #gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
+
+        # Assigning Local Variables
+        self.solstat_message = solstat_message
+        self.postype_message = postype_message
+        self.lat = lat
+        self.lon = lon
+        self.hgt = hgt
+        self.undulation = undulation
+        self.datum = datum
+        self.latsigma = latsigma
+        self.lonsigma = lonsigma
+        self.hgtsigma = hgtsigma
+        self.stnid = stnid
+        self.diff_age = diff_age
+        self.sol_age = sol_age
+        self.numberoftrackedsats = numberoftrackedsats
+        self.numberofsatsinsol = numberofsatsinsol
+        self.numberofL1sats = numberofL1sats
+        self.numberofmultisats = numberofmultisats
+        self.reserved = reserved
+        self.extsolstat_message = extsolstat_message
+        self.galbei_message = galbei_message
+        self.gpsglo_sigmask = gpsglo_sigmask
+        self.crc = crc
+        return
+
+
 # Unfinished
-
-
 class TRACKSTAT:
     def __init__(self):
         return
@@ -212,7 +298,7 @@ class Application(tk.Frame):
         self.getpositionsbutton.pack()
 
         self.abutton = tk.Button(
-            text="Get Velocity Information", command=None)
+            text="Get BESTGNSSPOS Information", command=self.GetBESTGNSSPOS)
         self.abutton.pack()
 
         self.bbutton = tk.Button(
@@ -235,8 +321,18 @@ class Application(tk.Frame):
         return
 
     def printFilename(self):
-        print("Current File: " + self.filename)
+        name = self.getName(".asc")
+        print("Current File: " + name)
         return
+
+    def getName(self, ext):
+        name = self.filename.split('/')
+        name = name[-1]
+        # removes the extention (ex. ".asc", ".txt", etc.)
+        tempname = name[:-4]
+        name = tempname
+        name = name + ext
+        return name
 
     def ParseFile(self):
         print(self.filename)
@@ -254,9 +350,11 @@ class Application(tk.Frame):
                 numberoflines += 1
 
                 [header, body] = func.GetHeaderBody(line)
-                print(body)
+                print(header)
                 parsedheader = func.ParseHeader(header)
                 newHeader = Header()
+                print(numberoflines)
+                print('\n')
                 newHeader.Parse(parsedheader)
                 log_name = newHeader.command
                 #print (parsedheader)
@@ -272,7 +370,9 @@ class Application(tk.Frame):
                 GNSSLines.append(newGNSSLine)
 
         self.GNSSLines = GNSSLines
-        print("Parse of " + self.filename + " Successful!")
+
+        name = self.getName(".asc")
+        print("Parse of " + name + " Successful!")
         return
 
     def GetPositioningData(self):
@@ -306,19 +406,19 @@ class Application(tk.Frame):
                 continue
 
         self.WriteData("PositioningDatafor ", Data)
-        print("Positioning Data csv for " + self.filename + " created!")
+        name = self.getName(".asc")
+        print("Positioning Data csv for " + name + " created!")
+        return
+
+    def GetBESTGNSSPOS(self):
+        func.GetBESTGNSSPOS(self.filename, self.GNSSLines)
         return
 
     def WriteData(self, prefix, Data):
         if self.filename == None:
             return
-        name = self.filename.split('/')
-        name = name[-1]
-        # removes the extention (ex. ".asc", ".txt", etc.)
-        tempname = name[:-4]
-        name = tempname
-        name = name + ".csv"
-        print("name: " + name)
+
+        name = self.getName(".csv")
         newfilename = prefix + name
         mycsv = open(newfilename, "w+")
         csvWriter = c.writer(mycsv, delimiter=',')
