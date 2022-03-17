@@ -19,13 +19,25 @@ def exceltodict(filename):
 
 # Splits long line from ASCII file into the header and body
 def GetHeaderBody(line):
-    splitline = line.split(";")
+    check = line.split(",")
+    first_string = check[0]
+    # print(first_string[0])
     header = []
-    # array of headers incase of rxconfig
-    numofheaders = len(splitline) - 1
-    for i in range(0, numofheaders):
-        header.append(splitline[i])
-    body = splitline[numofheaders]
+    # In the cases of "#" and "%" sync's the body variable is a long string with ","
+    if first_string[0] != "$":
+        splitline = line.split(";")
+        # array of headers incase of rxconfig (usually numofheaders is 1)
+        numofheaders = len(splitline) - 1
+        for i in range(0, numofheaders):
+            header.append(splitline[i])
+        body = splitline[numofheaders]
+    # In the cases of "$" the body variable is an already separated array
+    else:
+        body = []
+        header.append(first_string)
+        for i in range(1, len(check)):
+            body.append(check[i])
+
     return [header, body]
 
 
@@ -40,13 +52,13 @@ def ParseHeader(header):
         # print('\n')
         # Takes the sync "#" for ASCII
         sync = fullcommand[0]
-        print("sync: " + sync)
-
-        # Ex. full_command = "#BestPosA", command = "BestPos"
-        command = fullcommand[:-1]
-        command = command[1:]
+        #print("sync: " + sync)
 
         if sync == "#":
+            # Ex. full_command = "#BestPosA", command = "BestPos"
+            command = fullcommand[:-1]
+            command = command[1:]
+
             port = splitheader[1]
             sequence = splitheader[2]
             idletime = splitheader[3]
@@ -63,10 +75,18 @@ def ParseHeader(header):
             parsedheader.append([sync, command, port, sequence, idletime,
                                 timestatus_message, week, seconds, recieverstatus, reserved, recieversw])
         elif sync == "%":
+            # Ex. full_command = "#BestPosA", command = "BestPos"
+            command = fullcommand[:-1]
+            command = command[1:]
+
             parsedheader.append([sync, command])
             #print (parsedheader)
             # print('\n')
         elif sync == "$":
+            command = fullcommand[1:]
+            #print("test: ")
+            # print(command)
+            # print('\n')
             parsedheader.append([sync, command])
 
     return parsedheader
@@ -102,27 +122,46 @@ def ParseFile(filename):
         numberoflines += 1
 
         [header, body] = GetHeaderBody(line)
+        # ~~~~ DEBUGING ~~~~~~#
+        #print("header: ")
+        # print(header)
+        # print('\n')
+        #print("body: ")
+        # print(body)
         parsedheader = ParseHeader(header)
         newHeader = Header()
+        # print(numberoflines)
+        # print('\n')
         newHeader.Parse(parsedheader)
         log_name = newHeader.command
+        #print (parsedheader)
         # Checks for the command and creates object accordingly
         if log_name == "BESTPOS":
             newBody = BESTPOS()
         elif log_name == "BESTGNSSPOS":
             newBody = BESTGNSSPOS()
+        elif log_name == "INSPVAX":
+            newBody = INSPVAX()
+        elif log_name == "RANGE":
+            newBody = RANGE()
         else:
-            newBody = None
+            newBody = NoBody()
 
         newBody.Parse(body)
 
         newGNSSLine = GNSSLine(newHeader, newBody)
         GNSSLines.append(newGNSSLine)
-        return GNSSLines
+
+    name = getName(filename, ".asc")
+    print("Parse of " + name + " Successful!")
+    return GNSSLines
 
 
 def GetPositioningData(filename, GNSSLines):
+    header = ["week", "seconds", "stnid", "numberofsatsinsol", "numberofL1",
+              "numberofmultisats", "lat", "latsigma", "lon", "lonsigma", "hgt", 'hgtsigma', 'und']
     Data = []
+    Data.append(header)
 
     if filename == None:
         return
@@ -148,15 +187,19 @@ def GetPositioningData(filename, GNSSLines):
             textline = [week, seconds, stnid, numberofsatsinsol,
                         numberofL1, numberofmultisats, lat, latsigma, lon, lonsigma, hgt, hgtsigma, und]
             Data.append(textline)
-        else:
-            continue
-    WriteData("PositioningDatafor", filename, Data)
+
+    WriteData("Positioning Data for ", filename, Data)
+    name = getName(filename, ".asc")
+    # print(Data)
+    print("Positioning Data csv for " + name + " created!")
     return
 
 
 def GetBESTGNSSPOS(filename, GNSSLines):
+    header = ["week", "seconds", "solstat_message", "position type_message", "lat", "lon", "hgt", "undulation", "datum", "latsigma", "lonsigma", "stationid", "differential_age",
+              "solution_age", "numberoftrackedsats", "numberofL1sats", "numberofmultisats", "reserved", "Extended solution status ", "Galileo and BeiDou sig mask", "GPS and GLONASS sig mask", "32 Bit crc"]
     Data = []
-
+    Data.append(header)
     if filename == None:
         return
 
@@ -200,6 +243,80 @@ def GetBESTGNSSPOS(filename, GNSSLines):
     return
 
 
+def GetINSPVAX(filename, GNSSLines):
+    header = ['week', 'seconds', 'INSstatus_message', 'postype_message', 'lat', 'lon', 'hgt', 'undulation', 'northvel', 'eastvel', 'upvel', 'roll', 'pitch', 'azimuth', 'latsigma',
+              'lonsigma', 'hgtsigma', 'northvelsigma', 'eastvelsigma', 'upvelsigma', 'rollsigma', 'pitchsigma', 'azimuthsigma', 'Extended solution status', 'Time Since Update']
+    Data = []
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "INSPVAX":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+
+            instatus_message = GNSSLine.body.instatus_message
+            postype_message = GNSSLine.body.postype_message
+            lat = GNSSLine.body.lat
+            lon = GNSSLine.body.lon
+            hgt = GNSSLine.body.hgt
+            undulation = GNSSLine.body.undulation
+
+            northvel = GNSSLine.body.northvel
+            eastvel = GNSSLine.body.eastvel
+            upvel = GNSSLine.body.upvel
+            roll = GNSSLine.body.roll
+            pitch = GNSSLine.body.pitch
+            azimuth = GNSSLine.body.azimuth
+
+            latsigma = GNSSLine.body.latsigma
+            lonsigma = GNSSLine.body.lonsigma
+            hgtsigma = GNSSLine.body.hgtsigma
+            northvelsigma = GNSSLine.body.northvelsigma
+            eastvelsigma = GNSSLine.body.eastvelsigma
+            upvelsigma = GNSSLine.body.upvelsigma
+            rollsigma = GNSSLine.body.rollsigma
+            pitchsigma = GNSSLine.body.pitchsigma
+            azimuthsigma = GNSSLine.body.azimuthsigma
+            extsolstat_message = GNSSLine.body.extsolstat_message
+            tsu = GNSSLine.body.tsu
+
+            textline = [week, seconds, instatus_message, postype_message, lat, lon, hgt, undulation, northvel, eastvel, upvel, roll, pitch, azimuth, latsigma,
+                        lonsigma, hgtsigma, northvelsigma, eastvelsigma, upvelsigma, rollsigma, pitchsigma, azimuthsigma, extsolstat_message, tsu]
+            Data.append(textline)
+        else:
+            continue
+    WriteData("INSPVAX for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("INSPVAX csv file for " + name + " created!")
+    return
+
+def GetRANGE(filename, GNSSLines):
+    header = ["PRN", "glofreq", "pseudorange measurement", "pseudorange sigma", "carrier phase", "carrier phase sigma", "soppler freq", "Carrier to noise density ratio", "locktime", "tracking status"]
+    Data = []
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "RANGE":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+            PRNobs = GNSSLine.body.PRNobs
+            for i in range (0, len(PRNobs)):
+                textline = PRNobs[i]
+                Data.append(textline)
+
+    WriteData("RANGE for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("RANGE csv file for " + name + " created!")
+    return
+
 def getName(filename, ext):
     name = filename.split('/')
     name = name[-1]
@@ -213,7 +330,7 @@ def getName(filename, ext):
 def WriteData(prefix, filename, Data):
     name = getName(filename, ".csv")
     newfilename = prefix + name
-    mycsv = open(newfilename, "w+")
+    mycsv = open(newfilename, 'w', newline='')
     csvWriter = c.writer(mycsv, delimiter=',')
     csvWriter.writerows(Data)
     return

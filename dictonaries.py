@@ -205,3 +205,21 @@ bestpos_gpsglo_sigmask = {
     "40": "GLONASS L3 used in Solution"
 
 }
+
+interial_solution_status = {
+
+    'INS_INACTIVE': 'IMU logs are present, but the alignment routine has not started; INS is inactive.',
+    'INS_ALIGNING': 'INS is in alignment mode.',
+    'INS_HIGH_VARIANCE': 'The INS solution uncertainty contains outliers and the solution may be outside specifications.1 The solution is still valid but you should monitor the solution uncertainty in the INSSTDEV log. It may be encountered during times when GNSS is absent or poor.',
+    'INS_SOLUTION_GOOD': 'The INS filter is in navigation mode and the INS solution is good.',
+    'INS_SOLUTION_FREE': 'The INS Filter is in navigation mode and the GNSS solution is suspected to be in error. The inertial filter will report this status when there are no available updates (GNSS or other) being accepted and used.',
+    'INS_ALIGNMENT_COMPLETE': 'The INS filter is in navigation mode, but not enough vehicle dynamics have been experienced for the system to be within specifications.',
+    'DETERMINING_ORIENTATION': 'INS is determining the IMU axis aligned with gravity.',
+    'WAITING_INITIALPOS': 'The INS filter has determined the IMU orientation and is awaiting an initial position estimate to begin the alignment process.',
+    'WAITING_AZIMUTH': 'The INS filer has orientation, initial biases, initial position and valid roll/pitch estimated. Will not proceed until initial azimuth is entered.',
+    'INITIALIZING_BIASES': 'The INS filter is estimating initial biases during the first 10 seconds of stationary data.',
+    'MOTION_DETECT': 'The INS filter has not completely aligned, but has detected motion.',
+    'WAITING_ALIGNMENTORIENTATION': 'The INS filter is waiting to start alignment until the current Vehicle Frame roll and pitch estimates are within the configured threshold of the expected orientation (set by the SETALIGNMENTORIENTATION command).'
+
+
+}
