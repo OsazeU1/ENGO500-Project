@@ -221,5 +221,35 @@ interial_solution_status = {
     'MOTION_DETECT': 'The INS filter has not completely aligned, but has detected motion.',
     'WAITING_ALIGNMENTORIENTATION': 'The INS filter is waiting to start alignment until the current Vehicle Frame roll and pitch estimates are within the configured threshold of the expected orientation (set by the SETALIGNMENTORIENTATION command).'
 
+}
+
+imutypes = {
+
+    '0': 'Unknown IMU type (default)',
+    '1': 'Honeywell HG1700 AG11',
+    '4': 'Honeywell HG1700 AG17',
+    '5': 'Honeywell HG1900 CA29',
+    '8': 'Northrop Grumman LN200/LN200C',
+    '11': 'Honeywell HG1700 AG58',
+    '12': 'Honeywell HG1700 AG62',
+    '13': 'iMAR iIMU-FSAS',
+    '16': 'KVH CPT IMU',
+    '20': 'Honeywell HG1930 AA99',
+    '26': 'Northrop Grumman Litef ISA-100C',
+    '27': 'Honeywell HG1900 CA50',
+    '28': 'Honeywell HG1930 CA50',
+    '31': 'Analog Devices ADIS16488',
+    '32': 'Sensonor STIM300',
+    '33': 'KVH 1750 IMU',
+    '41': 'Epson G320N',
+    '52': 'Northrop Grumman Litef µIMU-IC',
+    '56': 'Sensonor STIM300, Direct Connection',
+    '58': 'Honeywell HG4930 AN01',
+    '61': 'Epson G370N',
+    '62': 'Epson G320N – 200 Hz',
+    '68': 'Honeywell HG4930 AN04 – 100 Hz',
+    '69': 'Honeywell HG4930 AN04 – 400 Hz'
+
+
 
 }

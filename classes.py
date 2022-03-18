@@ -22,8 +22,11 @@ class Header:
             rxconfig = True
 
         # assigning variables
+
+        # DEBUGING #
         # print(header)
         # print('\n')
+        # print(header[0])
         temp = header[0]
         if temp[0] == "#":
             [sync, command, port, sequence, idletime,
@@ -40,7 +43,13 @@ class Header:
             self.reserved = reserved
             self.recieversw = recieversw
             self.rxconfig = rxconfig
-        elif temp[0] == "%" or temp[0] == "$":
+        elif temp[0] == "%":
+            [sync, command, week, seconds] = header[0]
+            self.sync = sync
+            self.command = command
+            self.week = week
+            self.seconds = seconds
+        elif temp[0] == "$":
             [sync, command] = header[0]
             self.sync = sync
             self.command = command
@@ -292,12 +301,147 @@ class RANGE:
         # print(len(self.PRNobs))
         return
 
-# Unfinished
-
 
 class TRACKSTAT:
 
     def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+        # print(mainbody)
+        # assigning variables and translating codes to messages
+
+        solstat = mainbody[0]
+        self.solstat_message = d.bestpos_solutionsstatus[solstat]
+        postype = mainbody[1]
+        self.postype_message = d.bestpos_posveltype[postype]
+
+        self.cutoff = mainbody[2]
+        # Number of hardware channels with information to follow
+        self.numberofchans = int(mainbody[3])
+        #print (self.numberofobs)
+        index = 4
+        self.PRNobs = []
+        # print(mainbody[540])
+        for i in range(0, self.numberofchans):
+            temp = []
+            for j in range(0, 10):
+                if index <= self.numberofchans*10 + 3:
+                    temp.append(mainbody[index])
+                    index = index + 1
+            # print(temp)
+            self.PRNobs.append(temp)
+
+        # print(len(self.PRNobs))
+        return
+
+
+class SATVIS2:
+
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+        self.satvis_message = "TRUE"
+        self.almanacflag_message = "TRUE"
+
+        self.satsystem = mainbody[0]
+        satvis = mainbody[1]
+        if satvis == "0":
+            self.satvis_message = "FALSE"
+
+        almanacflag = mainbody[2]
+        if almanacflag == "0":
+            self.almanacflag_message = "FALSE"
+
+        # Number of satellites
+        self.numberofsats = int(mainbody[3])
+        #print (self.numberofsats)
+        index = 4
+        self.SATobs = []
+        # print(mainbody[540])
+        for i in range(0, self.numberofsats):
+            temp = []
+            for j in range(0, 6):
+                if index <= self.numberofsats*6 + 3:
+                    temp.append(mainbody[index])
+                    index = index + 1
+            # print(temp)
+            self.SATobs.append(temp)
+
+        # print(len(self.SATobs))
+        return
+
+
+class RAWIMUSX:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+        # print(mainbody)
+        [self.imuinfo, imutype, self.gnssweek, self.gnssweekseconds, imustatus, self.zaccel,
+            self.yaccel, self.xaccel, self.zgyro, self.ygyro, self.xgyro] = mainbody
+
+        self.imu = d.imutypes[imutype]
+        self.imustatus_message = "WIP"
+        #self.imustatus_message = maybenotneeded
+        return
+
+
+class HEADING2:
+
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+        [solstat, postype, self.length, self.heading, self.pitch, self.reserved, self.hdgsigma, self.pitchdigma, self.roverid, self.masterstnid,
+            self.numberofsats, self.numberofsatsinsol, self.numberofobs, self.numberofmultisats, solsource, ess, galbei, gpsglo] = mainbody
+
+        self.solstat_message = d.bestpos_solutionsstatus[solstat]
+        self.postype_message = d.bestpos_posveltype[postype]
+        self.solsource = "WIP"
+        self.extsolstat_message = "WIP"
+        self.galbei_message = "WIP"
+        self.gpsglo_message = "WIP"
+        #self.solsource = mightnotneed
+        #self.extsolstat_message = d.bestpos_ess[extsolstat]
+        #self.galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
+        #self.gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
+
+        return
+
+
+class PASSTHROUGH:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # splits into the crc end message and the main body of the log
+        [mainbody, crc] = func.SplitBodyMessage(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        mainbody = mainbody.split(",")
+        [self.port, self.numberofbytes, self.data] = mainbody
         return
 
 # Unfinished
@@ -346,10 +490,6 @@ class Application(tk.Frame):
             master, text="Parse Data", command=self.ParseFile)
         self.parsebutton.pack()
 
-        self.ebutton = tk.Button(
-            master, text="Display Galileo and BeiDou Signals", command=None)
-        self.ebutton.pack()
-
         self.fbutton = tk.Button(
             master, text="Display GPS and GLONASS Signals", command=None)
         self.fbutton.pack()
@@ -372,8 +512,28 @@ class Application(tk.Frame):
         self.cbutton.pack()
 
         self.dbutton = tk.Button(
-            text="Get Device Position Information", command=None)
+            text="Get TRACKSTAT Information", command=self.GetTRACKSTAT)
         self.dbutton.pack()
+
+        self.ebutton = tk.Button(
+            master, text="Display Galileo and BeiDou Signals", command=None)
+        self.ebutton.pack()
+
+        self.fbutton = tk.Button(
+            text="Get SATVIS2 Information", command=self.GetSATVIS2)
+        self.fbutton.pack()
+
+        self.gbutton = tk.Button(
+            text="Get RAWIMUSX Information", command=self.GetRAWIMUSX)
+        self.gbutton.pack()
+
+        self.hbutton = tk.Button(
+            text="Get HEADING2 Information", command=self.GetHEADING2)
+        self.hbutton.pack()
+
+        self.ibutton = tk.Button(
+            text="Get PASSTHROUGH Information", command=self.GetPASSTHROUGH)
+        self.ibutton.pack()
 
     def openFile(self):
         self.filename = filedialog.askopenfilename(initialdir="C:\\",
@@ -496,6 +656,26 @@ class Application(tk.Frame):
 
     def GetRANGE(self):
         func.GetRANGE(self.filename, self.GNSSLines)
+        return
+
+    def GetTRACKSTAT(self):
+        func.GetTRACKSTAT(self.filename, self.GNSSLines)
+        return
+
+    def GetSATVIS2(self):
+        func.GetSATVIS2(self.filename, self.GNSSLines)
+        return
+
+    def GetRAWIMUSX(self):
+        func.GetRAWIMUSX(self.filename, self.GNSSLines)
+        return
+
+    def GetHEADING2(self):
+        func.GetHEADING2(self.filename, self.GNSSLines)
+        return
+
+    def GetPASSTHROUGH(self):
+        func.GetPASSTHROUGH(self.filename, self.GNSSLines)
         return
 
     def WriteData(self, prefix, Data):

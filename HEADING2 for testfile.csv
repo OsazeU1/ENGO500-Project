@@ -1,0 +1,2 @@
+solstat,postype,length,heading,pitch,reserved,hdgsigma,pitchdigma,roverid,masterstnid,numberofsats,numberofsatsinsol,numberofobs,numberofmultisats,solsource,ess,galbei,gpsglo
+Solution computed,Multi-frequency RTK solution with carrier phase ambiguities resolved to narrow-lane integers,0.927607417,178.347869873,-1.3037414550,0,0.261901051,0.391376048,"""R222""","""AAAA""",18,17,17,16,WIP,WIP,WIP,WIP

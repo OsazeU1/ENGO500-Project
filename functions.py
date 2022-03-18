@@ -78,8 +78,9 @@ def ParseHeader(header):
             # Ex. full_command = "#BestPosA", command = "BestPos"
             command = fullcommand[:-1]
             command = command[1:]
-
-            parsedheader.append([sync, command])
+            week = splitheader[1]
+            seconds = splitheader[2]
+            parsedheader.append([sync, command, week, seconds])
             #print (parsedheader)
             # print('\n')
         elif sync == "$":
@@ -144,6 +145,16 @@ def ParseFile(filename):
             newBody = INSPVAX()
         elif log_name == "RANGE":
             newBody = RANGE()
+        elif log_name == "TRACKSTAT":
+            newBody = TRACKSTAT()
+        elif log_name == "SATVIS2":
+            newBody = SATVIS2()
+        elif log_name == "RAWIMUSX":
+            newBody = RAWIMUSX()
+        elif log_name == "HEADING2":
+            newBody = HEADING2()
+        elif log_name == "PASSTHROUGH":
+            newBody = PASSTHROUGH()
         else:
             newBody = NoBody()
 
@@ -196,7 +207,7 @@ def GetPositioningData(filename, GNSSLines):
 
 
 def GetBESTGNSSPOS(filename, GNSSLines):
-    header = ["week", "seconds", "solstat_message", "position type_message", "lat", "lon", "hgt", "undulation", "datum", "latsigma", "lonsigma", "stationid", "differential_age",
+    header = ["week", "seconds", "solstat_message", "position type_message", "lat", "lon", "hgt", "undulation", "datum", "latsigma", "lonsigma", "hgtsigma", "stationid", "differential_age",
               "solution_age", "numberoftrackedsats", "numberofL1sats", "numberofmultisats", "reserved", "Extended solution status ", "Galileo and BeiDou sig mask", "GPS and GLONASS sig mask", "32 Bit crc"]
     Data = []
     Data.append(header)
@@ -232,7 +243,7 @@ def GetBESTGNSSPOS(filename, GNSSLines):
             gpsglo_sigmask = GNSSLine.body.gpsglo_sigmask
             crc = GNSSLine.body.crc
 
-            textline = [week, seconds, solstat_message, postype_message, lat, lon, hgt, undulation, datum, latsigma, lonsigma, stnid, diff_age,
+            textline = [week, seconds, solstat_message, postype_message, lat, lon, hgt, undulation, datum, latsigma, lonsigma, hgtsigma, stnid, diff_age,
                         sol_age, numberoftrackedsats, numberofL1sats, numberofmultisats, reserved, extsolstat_message, galbei_message, gpsglo_sigmask, crc]
             Data.append(textline)
         else:
@@ -294,8 +305,10 @@ def GetINSPVAX(filename, GNSSLines):
     print("INSPVAX csv file for " + name + " created!")
     return
 
+
 def GetRANGE(filename, GNSSLines):
-    header = ["PRN", "glofreq", "pseudorange measurement", "pseudorange sigma", "carrier phase", "carrier phase sigma", "soppler freq", "Carrier to noise density ratio", "locktime", "tracking status"]
+    header = ["PRN", "glofreq", "pseudorange measurement", "pseudorange sigma", "carrier phase",
+              "carrier phase sigma", "soppler freq", "Carrier to noise density ratio", "locktime", "tracking status"]
     Data = []
     Data.append(header)
     if filename == None:
@@ -308,13 +321,189 @@ def GetRANGE(filename, GNSSLines):
             week = GNSSLine.header.week
             seconds = GNSSLine.header.seconds
             PRNobs = GNSSLine.body.PRNobs
-            for i in range (0, len(PRNobs)):
+            for i in range(0, len(PRNobs)):
                 textline = PRNobs[i]
                 Data.append(textline)
 
     WriteData("RANGE for ", filename, Data)
     name = getName(filename, ".asc")
     print("RANGE csv file for " + name + " created!")
+    return
+
+
+def GetTRACKSTAT(filename, GNSSLines):
+
+    Data = []
+    header = ["solution status", "position type", "GPS tracking elevation cut-off angle", "PRN", "glofreq", "tracking status", "pseudorange measurement",
+              "doppler freq", "Carrier to noise density ratio", "locktime", "pseudorange residual", "range reject code", "pseudorange filter weighting"]
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "TRACKSTAT":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+            solstat_message = GNSSLine.body.solstat_message
+            postype_message = GNSSLine.body.postype_message
+            cutoff = GNSSLine.body.cutoff
+            PRNobs = GNSSLine.body.PRNobs
+            for i in range(0, len(PRNobs)):
+                textline = PRNobs[i]
+
+                textline.insert(0, solstat_message)
+                textline.insert(1, postype_message)
+                textline.insert(2, cutoff)
+
+                Data.append(textline)
+
+    WriteData("TRACKSTAT for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("TRACKSTAT csv file for " + name + " created!")
+    return
+
+
+def GetSATVIS2(filename, GNSSLines):
+    Data = []
+    header = ["Satellite System", "satellite visibility", "complete almanac ", "Satellite ID", "Satellite health", "Elevation(degrees)", "Azimuth (degrees)",
+              "doppler freq", "Theoretical Doppler", "Apparent Doppler"]
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "SATVIS2":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+
+            satsystem = GNSSLine.body.satsystem
+            satvis_message = GNSSLine.body.satvis_message
+            almanacflag_message = GNSSLine.body.almanacflag_message
+
+            SATobs = GNSSLine.body.SATobs
+            for i in range(0, len(SATobs)):
+                textline = SATobs[i]
+
+                textline.insert(0, satsystem)
+                textline.insert(1, satvis_message)
+                textline.insert(2, almanacflag_message)
+
+                Data.append(textline)
+
+    WriteData("SATVIS2 for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("SATVIS2 csv file for " + name + " created!")
+    return
+
+
+def GetRAWIMUSX(filename, GNSSLines):
+    Data = []
+    header = ['IMU Info Bits', 'imutype', 'gnssweek', 'gnssweekseconds', 'imustatus',
+              'zaccel', 'yaccel', 'xaccel', 'zgyro', 'ygyro', 'xgyro']
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "RAWIMUSX":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+
+            imuinfo = GNSSLine.body.imuinfo
+            imutype = GNSSLine.body.imu
+            gnssweek = GNSSLine.body.gnssweek
+            gnssweekseconds = GNSSLine.body.gnssweekseconds
+            imustatus = GNSSLine.body.imustatus_message
+            zaccel = GNSSLine.body.zaccel
+            yaccel = GNSSLine.body.yaccel
+            xaccel = GNSSLine.body.xaccel
+            zgyro = GNSSLine.body.zgyro
+            ygyro = GNSSLine.body.ygyro
+            xgyro = GNSSLine.body.xgyro
+
+            textline = [imuinfo, imutype, gnssweek, gnssweekseconds, imustatus,
+                        zaccel, yaccel, xaccel, zgyro, ygyro, xgyro]
+            Data.append(textline)
+    WriteData("RAWIMUSX for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("RAWIMUSX csv file for " + name + " created!")
+    return
+
+
+def GetHEADING2(filename, GNSSLines):
+    Data = []
+    header = ['solstat', 'postype', 'length', 'heading', 'pitch', 'reserved', 'hdgsigma', 'pitchdigma', 'roverid', 'masterstnid',
+              'numberofsats', 'numberofsatsinsol', 'numberofobs', 'numberofmultisats', 'solsource', 'ess', 'galbei', 'gpsglo']
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "HEADING2":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+
+            solstat = GNSSLine.body.solstat_message
+            postype = GNSSLine.body.postype_message
+            length = GNSSLine.body.length
+            heading = GNSSLine.body.heading
+            pitch = GNSSLine.body.pitch
+            reserved = GNSSLine.body.reserved
+            hdgsigma = GNSSLine.body.hdgsigma
+            pitchdigma = GNSSLine.body.pitchdigma
+            roverid = GNSSLine.body.roverid
+            masterstnid = GNSSLine.body.masterstnid
+            numberofsats = GNSSLine.body.numberofsats
+            numberofsatsinsol = GNSSLine.body.numberofsatsinsol
+            numberofobs = GNSSLine.body.numberofobs
+            numberofmultisats = GNSSLine.body.numberofmultisats
+            solsource = GNSSLine.body.solsource
+            ess = GNSSLine.body.extsolstat_message
+            galbei = GNSSLine.body.galbei_message
+            gpsglo = GNSSLine.body.gpsglo_message
+
+            textline = [solstat, postype, length, heading, pitch, reserved, hdgsigma, pitchdigma, roverid, masterstnid,
+                        numberofsats, numberofsatsinsol, numberofobs, numberofmultisats, solsource, ess, galbei, gpsglo]
+            Data.append(textline)
+
+    WriteData("HEADING2 for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("HEADING2 csv file for " + name + " created!")
+    return
+
+
+def GetPASSTHROUGH(filename, GNSSLines):
+    Data = []
+    header = ['week','seconds', 'port', 'numberofbytes', 'data']
+    Data.append(header)
+    if filename == None:
+        return
+
+    print("InGPD: " + filename)
+    for GNSSLine in GNSSLines:
+        textline = []
+        if GNSSLine.header.command == "PASSTHROUGH":
+            week = GNSSLine.header.week
+            seconds = GNSSLine.header.seconds
+
+            port = GNSSLine.body.port
+            numberofbytes = GNSSLine.body.numberofbytes
+            data = GNSSLine.body.data
+
+            textline = [week, seconds, port, numberofbytes, data]
+            Data.append(textline)
+
+    WriteData("PASSTHROUGH for ", filename, Data)
+    name = getName(filename, ".asc")
+    print("PASSTHROUGH csv file for " + name + " created!")
     return
 
 def getName(filename, ext):

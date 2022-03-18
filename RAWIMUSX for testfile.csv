@@ -1,0 +1,2 @@
+imuinfo,imutype,gnssweek,gnssweekseconds,imustatus,zaccel,yaccel,xaccel,zgyro,ygyro,xgyro
+04,Epson G320N,2201,176759.996783000,WIP,304682697,-30458093,-23438128,147615820,-20119542,1937019
