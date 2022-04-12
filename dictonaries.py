@@ -44,7 +44,7 @@ recieverstatus = {
     '0x06000000': 'Interpret Status/Error Bits as OEM7 format',
     '0x08000000': 'Tracking mode',
     '0x10000000': 'Digital Filtering Enabled',
-    '0x20000000': 'Auxiliary 3 status event flag',
+    '0x02000000': 'Auxiliary 3 status event flag',
     '0x40000000': 'Auxiliary 2 status event flag',
     '0x80000000': 'Auxiliary 1 status event flag'
 
@@ -177,32 +177,29 @@ bestpos_ess = {
 }
 
 bestpos_galbei_sigmask = {
-    "00": "Galileo E1 used in Solution (unsure)",
-    "01":  "Galileo E1 used in Solution",
-    "02": "Galileo E5a used in Solution",
-    "04": "Galileo E5b used in Solution",
-    "06": "BeiDou B3 used in Solution (B3I), unsure",
-    "08": "Galileo ALTBOC used in Solution",
-    "10": "BeiDou B1 used in Solution (B1I and B1C)",
-    "20": "BeiDou B2 used in Solution (B2I, B2a and B2b)",
-    "40": "BeiDou B3 used in Solution (B3I)",
-    "80": "Galileo E6 used in Solution (E6B and E6C)"
+    '0': 'Galileo E1 used in Solution',
+    '1': 'Galileo E5a used in Solution',
+    '2': 'Galileo E5b used in Solution',
+    '3': 'Galileo ALTBOC used in Solution',
+    '4': 'BeiDou B1 used in Solution (B1I and B1C)',
+    '5': 'BeiDou B2 used in Solution (B2I, B2a and B2b)',
+    '6': 'BeiDou B3 used in Solution (B3I)',
+    '7': 'Galileo E6 used in Solution (E6B and E6C)',
 
 
 }
 
 bestpos_gpsglo_sigmask = {
 
-    "00":  "GPS L1 used in Solution (unsure)",
-    "01":  "GPS L1 used in Solution",
-    "02": "GPS L2 used in Solution",
-    "03": "Reserved (unsure)",
-    "11": "unkown",
-    "33": "unknown",
-    "04": "GPS L5 used in Solution",
-    "10": "GLONASS L1 used in Solution",
-    "20": "GLONASS L2 used in Solution",
-    "40": "GLONASS L3 used in Solution"
+    '0': 'GPS L1 used in Solution',
+    '1': 'GPS L2 used in Solution',
+    '2': 'GPS L5 used in Solution',
+    '3': 'Reserved',
+    '4': 'GLONASS L1 used in Solution',
+    '5': 'GLONASS L2 used in Solution',
+    '6': 'GLONASS L3 used in Solution',
+    '7': 'Reserved',
+
 
 }
 
@@ -244,12 +241,134 @@ imutypes = {
     '41': 'Epson G320N',
     '52': 'Northrop Grumman Litef µIMU-IC',
     '56': 'Sensonor STIM300, Direct Connection',
+    '57': 'unknown',
     '58': 'Honeywell HG4930 AN01',
     '61': 'Epson G370N',
     '62': 'Epson G320N – 200 Hz',
     '68': 'Honeywell HG4930 AN04 – 100 Hz',
     '69': 'Honeywell HG4930 AN04 – 400 Hz'
 
+}
+
+gps_qual_indicators = {
+
+    '0': 'Fix not available or invalid',
+    '1': 'Single point',
+    '2': 'Converged PPP (TerraStar-L)',
+    '4': 'RTK fixed ambiguity solution',
+    '5': 'Converged PPP (TerraStar-C, TerraStar-C PRO, TerraStar-X)',
+    '6': 'Dead reckoning mode',
+    '7': 'Manual input mode (fixed position)',
+    '8': 'Simulator mode'
+
+}
+
+gps_udpate_qual = {
+    '0': 'No position',
+
+    '1': 'All non-RTK fixed integer positions',
+
+    '2' : 'RTK fixed integer position'
+}
+
+ins_status_flag = {
+    '0': 'All SPAN Pre-Alignment INS Status',
+
+    '1': 'INS_ALIGNMENT_COMPLETE, INS_SOLUTION_GOOD, INS_HIGH_VARIANCE, INS_SOLUTION_FREE',
+}
+
+nmea_posmode = {
+
+    'A': 'Autonomous',
+    'D': 'Differential',
+    'E': 'Estimated (dead reckoning) mode',
+    'M': 'Manual input',
+    'N': 'Data not valid'
+
+}
+
+gnss_systems_sigids = {
+
+    '1' : {     '0': 'All signals',
+                '1': 'L1 C/A',
+                '2': 'L1 P(Y)',
+                '3': 'L1 M',
+                '4': 'L2 P(Y)',
+                '5': 'L2C-M',
+                '6': 'L2C-L',
+                '7': 'L5-I',
+                '8': 'L5-Q',
+                '9': 'Reserved'},
+
+    '2': {'0': 'All signals',
+          '1': 'L1 C/A',
+          '2': 'L1 P(Y)',
+          '3': 'L1 M',
+          '4': 'L2 P(Y)',
+          '5': 'L2C-M',
+          '6': 'L2C-L',
+          '7': 'L5-I',
+          '8': 'L5-Q',
+          '9': 'Reserved'},
+
+    '3': {'0': 'All signals',
+          '1': 'L1 C/A',
+          '2': 'L1 P(Y)',
+          '3': 'L1 M',
+          '4': 'L2 P(Y)',
+          '5': 'L2C-M',
+          '6': 'L2C-L',
+          '7': 'L5-I',
+          '8': 'L5-Q',
+          '9': 'Reserved'},
+
+    '4': {'0': 'All signals',
+          '1': 'L1 C/A',
+          '2': 'L1 P(Y)',
+          '3': 'L1 M',
+          '4': 'L2 P(Y)',
+          '5': 'L2C-M',
+          '6': 'L2C-L',
+          '7': 'L5-I',
+          '8': 'L5-Q',
+          '9': 'Reserved'},
+
+    '5': {'0': 'All signals',
+          '1': 'L1 C/A',
+          '2': 'L1 P(Y)',
+          '3': 'L1 M',
+          '4': 'L2 P(Y)',
+          '5': 'L2C-M',
+          '6': 'L2C-L',
+          '7': 'L5-I',
+          '8': 'L5-Q',
+          '9': 'Reserved'},
+
+    '6': {'0': 'All signals',
+          '1': 'L1 C/A',
+          '2': 'L1 P(Y)',
+          '3': 'L1 M',
+          '4': 'L2 P(Y)',
+          '5': 'L2C-M',
+          '6': 'L2C-L',
+          '7': 'L5-I',
+          '8': 'L5-Q',
+          '9': 'Reserved'}
 
 
+}
+
+gnss_system_names = {
+
+    '1':'GPS',
+
+    '2': 'GLONASS',
+
+    '3': 'Galileo',
+
+    '4': 'BeiDou System',
+
+    '5': 'QZSS',
+
+    '6': 'NavIC'
 }

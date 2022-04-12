@@ -3,6 +3,7 @@ import functions as func
 import tkinter as tk
 from tkinter import filedialog
 from time import sleep
+import math
 # for application to not freakout
 import csv as c
 
@@ -122,10 +123,18 @@ class BESTPOS:
         extsolstat = mainbody[18]
         galbei_sigmask = mainbody[19]
         gpsglo_sigmask = mainbody[20]
+
+        galbei_message = func.GetMessage(
+            galbei_sigmask, d.bestpos_galbei_sigmask)
+    
+        
+
+        gpsglo_message = func.GetMessage(
+            gpsglo_sigmask, d.bestpos_gpsglo_sigmask)
+            
         extsolstat_message = "WIP"
         #extsolstat_message = d.bestpos_ess[extsolstat]
-        galbei_message = "WIP"
-        gpsglo_message = "WIP"
+        
         #galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
         #gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
 
@@ -150,7 +159,7 @@ class BESTPOS:
         self.reserved = reserved
         self.extsolstat_message = extsolstat_message
         self.galbei_message = galbei_message
-        self.gpsglo_sigmask = gpsglo_sigmask
+        self.gpsglo_message = gpsglo_message
         self.crc = crc
         return
 
@@ -218,8 +227,11 @@ class BESTGNSSPOS:
 
         extsolstat_message = "WIP"
         #extsolstat_message = d.bestpos_ess[extsolstat]
-        galbei_message = "WIP"
-        gpsglo_message = "WIP"
+        galbei_message = func.GetMessage(
+            galbei_sigmask, d.bestpos_galbei_sigmask)
+
+        gpsglo_message = func.GetMessage(
+            gpsglo_sigmask, d.bestpos_gpsglo_sigmask)
         #galbei_message = d.bestpos_galbei_sigmask[galbei_sigmask]
         #gpsglo_message = d.bestpos_gpsglo_sigmask[gpsglo_sigmask]
 
@@ -244,7 +256,7 @@ class BESTGNSSPOS:
         self.reserved = reserved
         self.extsolstat_message = extsolstat_message
         self.galbei_message = galbei_message
-        self.gpsglo_sigmask = gpsglo_sigmask
+        self.gpsglo_message = gpsglo_message
         self.crc = crc
         return
 
@@ -444,41 +456,220 @@ class PASSTHROUGH:
         [self.port, self.numberofbytes, self.data] = mainbody
         return
 
+
+class GPGSA:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.vdop, check] = finalbody[16].split('*')
+        if finalbody[0] == "M":
+            finalbody[0] = "Manual, forced to operate in 2D or 3D"
+        else:
+            finalbody[0] = " Automatic 2D/3D"
+
+        if finalbody[0] == "1":
+            finalbody[0] = "Fix not available"
+        elif finalbody[0] == "2":
+            finalbody[0] = "2D"
+        else:
+            finalbody[0] = "3D"
+
+        for i in range(2, 13):
+            if finalbody[i] == '':
+                finalbody[i] = " "
+            elif int(finalbody[i]) <= 32:
+                finalbody[i] = "GPS"
+            elif int(finalbody[i]) <= 64 or finalbody[i] == 87:
+                finalbody[i] = "SBAS"
+            elif int(finalbody[i]) <= 96 and int(finalbody[i]) != 87:
+                finalbody[i] = "GLO"
+
+        [self.modema, self.mode123, self.prn1, self.prn2, self.prn3, self.prn4, self.prn5,
+            self.prn6, self.prn7, self.prn8, self.prn9, self.prn10, self.prn11, self.prn12, self.pdop, self.hdop, fullend] = finalbody
+        return
+
+
+class GPGGA:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+
+        finalbody[5] = d.gps_qual_indicators[finalbody[5]]
+
+        [self.utc, self.lat, self.latdir, self.lon, self.londir, self.quality, self.numofsats, self.hdop,
+            self.antennaalt, self.antennaunits, self.und, self.undunits, self.correctiondataage, self.stnid] = finalbody
+
+        return
+
+
+class PASHR:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.time, self.heading, self.trueheading, self.roll, self.pitch, self.heave, self.rollaccuracy, self.pitchaccuracy,
+         self.headingaccuracy, gpsupqual, message] = finalbody
+
+        [instatflag, self.checksum] = message.split('*')
+        self.gpsupqual = d.gps_udpate_qual[gpsupqual]
+        self.instatflag = d.ins_status_flag[instatflag]
+
+        return
+
+
+class GPGST:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.utc, self.rms, self.semimjrstd, self.semimnrstd, self.orient,
+            self.latstd, self.lonstd, message] = finalbody
+
+        [self.altstd, self.checksum] = message.split('*')
+        return
+
+
+class GPVTG:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.tracktrue, self.T, self.trackmag, self.M, self.speedoverground,
+            self.nauticalspeedunits, self.speed, self.speedindicator, message] = finalbody
+
+        [i, self.checksum] = message.split('*')
+
+        self.nmeaposmode = d.nmea_posmode[i]
+
+
+class GPHDT:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.headingdeg, message] = finalbody
+        [self.degtrue, self.checksum] = message.split('*')
+        return
+
+
+class GPZDA:
+    def __init__(self):
+        return
+
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        [self.utc, self.day, self.month, self.year, null1, message] = finalbody
 # Unfinished
 
 
-class LBANDBEAMTABLE:
-    def __init__(self, message):
-        self.message = message
+class GPGSV:
+    def __init__(self):
+        return
 
-        def Parse(message):
-            [mainbody, crc] = func.SplitBodyMessage(message)
-            mainbody = mainbody.split(",")
-            numberofentries = mainbody[0]
-            entries = [[]]
-            counter = 0
+    def Parse(self, body_message):
+        # print(body_message)
+
+        # makes an array with each of the fields being an index (allstrings)
+        finalbody = body_message
+        numofsatsinline = (len(finalbody)- 3)/4
+        
+        #print(numofsatsinline)
+        self.totalnumofmessages = finalbody[0]
+        self.currentmessagenum = finalbody[1]
+        self.totalnumofsatsinview = finalbody[2]
+        message = finalbody[len(finalbody) - 1]
+        #print(message)
+        [systemid, self.checksum] = message.split('*')
+        if systemid == "": 
+            self.sysname = 'unavailable'
+            self.syssignal = 'unavailable'
+        else:
+            num1 = systemid[0]
+            num2 = systemid[1]
+
+            self.sysname = d.gnss_system_names[num1]
+            self.syssignal = d.gnss_systems_sigids[num1][num2]
+
+        counter = 3
+       
+        self.satinfo = []
+        for i in range(0, int(numofsatsinline)-1):
             temp = []
-            # Start a 1 to ignore number of entries
-            for i in range(1, numberofentries*8):
-                temp.append(mainbody[i])
-                counter += 1
-                if counter % 8 == 0:
-                    entries.append(temp)
-                    temp = []
-                    counter = 0
 
-            self.numberofentries = numberofentries
-            self.entries = entries
+            for j in range(0, 4):
+                if finalbody[counter] == "":
+                    temp.append(" ")
+                else:
+                    temp.append(finalbody[counter])
+                counter = counter+1
+
+            self.satinfo.append(temp)
+        # account for missing snr at the end
+        temp = []
+        temp.append(finalbody[counter])
+        temp.append(finalbody[counter + 1])
+        temp.append(finalbody[counter + 2])
+        temp.append(" ")
+        return
 
 
 # Windows Application (.exe)
 class Application(tk.Frame):
     def __init__(self, master=None):
         tk.Frame.__init__(self, master)
+
+        space = tk.Label(master, text=" ")
+        space.config(font=("Courier", 14))
+        space.pack()
+
+        instructionsbox = tk.Text(master, height=3, width=40)
+        instructionstitle = tk.Label(master, text="Instructions")
+        instructionstitle.config(font=("Courier", 14))
+
+        instructionsmessage = "1. Open ASCII File" + '\n' + \
+            "2. Parse GNSS Logs" + '\n' + "3. Output CSV Files for Logs of Interest"
+
+        instructionstitle.pack()
+        instructionsbox.pack()
+
+        instructionsbox.insert(tk.END, instructionsmessage)
+
+        space2 = tk.Label(master, text=" ")
+        space2.config(font=("Courier", 14))
+        space2.pack()
+
         self.openbutton = tk.Button(
             master, text="Open ASCII File", command=self.openFile)
-        master.geometry("600x600")
-        master.title("GNSS Data Parser")
+        master.geometry("600x900")
+        master.title("GNSS Log Parser")
         self.openbutton.pack()
         self.filename = None
 
@@ -489,6 +680,18 @@ class Application(tk.Frame):
         self.parsebutton = tk.Button(
             master, text="Parse Data", command=self.ParseFile)
         self.parsebutton.pack()
+
+        # Create text widget and specify size.
+
+        # Create label
+
+        space3 = tk.Label(master, text=" ")
+        space3.config(font=("Courier", 14))
+        space3.pack()
+
+        GNSStitle = tk.Label(master, text="Set One of Available GNSS Logs")
+        GNSStitle.config(font=("Courier", 14))
+        GNSStitle.pack()
 
         self.fbutton = tk.Button(
             master, text="Display GPS and GLONASS Signals", command=None)
@@ -535,6 +738,50 @@ class Application(tk.Frame):
             text="Get PASSTHROUGH Information", command=self.GetPASSTHROUGH)
         self.ibutton.pack()
 
+        space4 = tk.Label(master, text=" ")
+        space4.config(font=("Courier", 14))
+        space4.pack()
+
+        INStitle = tk.Label(master, text="Set Two of Available GNSS Logs")
+        INStitle.config(font=("Courier", 14))
+        INStitle.pack()
+
+        self.gpgsabutton = tk.Button(
+            text="Get GPGSA Information", command=self.GetGPGSA)
+        self.gpgsabutton.pack()
+
+        self.gpggabutton = tk.Button(
+            text="Get GPGGA Information", command=self.GetGPGGA)
+        self.gpggabutton.pack()
+
+        self.gpzdabutton = tk.Button(
+            text="Get GPZDA Information", command=self.GetGPZDA)
+        self.gpzdabutton.pack()
+
+        self.pashrbutton = tk.Button(
+            text="Get PASHR Information", command=self.GetPASHR)
+        self.pashrbutton.pack()
+
+        self.gpgstbutton = tk.Button(
+            text="Get GPGST Information", command=self.GetGPGST)
+        self.gpgstbutton.pack()
+
+        self.gpvtgbutton = tk.Button(
+            text="Get GPVTG Information", command=self.GetGPVTG)
+        self.gpvtgbutton.pack()
+
+        self.gpgsvbutton = tk.Button(
+            text="Get GPGSV Information", command=self.GetGPGSV)
+        self.gpgsvbutton.pack()
+
+        self.gphdtbutton = tk.Button(
+            text="Get GPHDT Information", command=self.GetGPHDT)
+        self.gphdtbutton.pack()
+
+        self.gpzdabutton = tk.Button(
+            text="Get GPZDA Information", command=self.GetGPZDA)
+        self.gphdtbutton.pack()
+
     def openFile(self):
         self.filename = filedialog.askopenfilename(initialdir="C:\\",
                                                    title="Select ASCII File",
@@ -543,7 +790,7 @@ class Application(tk.Frame):
         return
 
     def printFilename(self):
-        name = self.getName(".asc")
+        name = self.filename
         print("Current File: " + name)
         return
 
@@ -676,6 +923,42 @@ class Application(tk.Frame):
 
     def GetPASSTHROUGH(self):
         func.GetPASSTHROUGH(self.filename, self.GNSSLines)
+        return
+
+    def GetGPGSA(self):
+        func.GetGPGSA(self.filename, self.GNSSLines)
+        return
+
+    def GetGPGGA(self):
+        func.GetGPGGA(self.filename, self.GNSSLines)
+        return
+
+    def GetGPZDA(self):
+        func.GetGPZDA(self.filename, self.GNSSLines)
+        return
+
+    def GetPASHR(self):
+        func.GetPASHR(self.filename, self.GNSSLines)
+        return
+
+    def GetGPGST(self):
+        func.GetGPGST(self.filename, self.GNSSLines)
+        return
+
+    def GetGPVTG(self):
+        func.GetGPVTG(self.filename, self.GNSSLines)
+        return
+
+    def GetGPGSV(self):
+        func.GetGPGSV(self.filename, self.GNSSLines)
+        return
+
+    def GetGPHDT(self):
+        func.GetGPHDT(self.filename, self.GNSSLines)
+        return
+
+    def GetGPZDA(self):
+        func.GetGPZDA(self.filename, self.GNSSLines)
         return
 
     def WriteData(self, prefix, Data):

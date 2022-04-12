@@ -1,3 +1,0 @@
-week,seconds,solstat_message,position type_message,lat,lon,hgt,undulation,datum,latsigma,lonsigma,stationid,differential_age,solution_age,numberoftrackedsats,numberofL1sats,numberofmultisats,reserved,Extended solution status ,Galileo and BeiDou sig mask,GPS and GLONASS sig mask,32 Bit crc
-2201,176688.000,Solution computed,Solution calculated using only data supplied by the GNSS satellites,51.07915043361,-114.12648824253,1108.8233,-16.6000,WGS84,1.2428,1.3888,"""""",0.000,0.000,19,18,17,00,WIP,WIP,33,"c443c828
-"
